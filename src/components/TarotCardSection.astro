@@ -1,0 +1,127 @@
+---
+// src/components/TarotCardSection.astro
+import { Image } from 'astro:assets';
+
+interface Props {
+  card: {
+    name: string;
+    name_short: string;
+    meaning: string;
+    isReversed: boolean;
+  };
+  meta: {
+    chapter: string;
+    label: string;
+    storyContext: string;
+    reverseLayout: boolean;
+  };
+  index: number;
+}
+
+const { card, meta, index } = Astro.props;
+
+// Dynamically import images
+const images = import.meta.glob<{ default: ImageMetadata }>('/src/assets/cards/*.{jpg,webp}');
+const imagePath = `/src/assets/cards/${card.name_short}.jpg`;
+---
+
+<section class="w-full bg-purple-950/30 border border-purple-500/20 rounded-3xl p-6 md:p-10 backdrop-blur-md shadow-[0_0_40px_rgba(18,10,42,0.8)] relative overflow-hidden group">
+  
+  <!-- Chapter & Title Indicator -->
+  <div class="flex items-center justify-between border-b border-purple-500/20 pb-4 mb-6">
+    <div class="space-y-0.5">
+      <span class="text-[10px] font-mono font-bold tracking-widest text-amber-300/80 uppercase block">
+        {meta.chapter}
+      </span>
+      <h2 class="text-lg md:text-xl font-serif font-bold text-pink-200">
+        {meta.label}
+      </h2>
+    </div>
+    <span class="text-[11px] font-mono font-bold text-amber-200 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-300/30">
+      {card.isReversed ? '↺ REVERSED' : '🡅 UPRIGHT'}
+    </span>
+  </div>
+
+  <!-- 2-Column Content (Alternating Left / Right) -->
+  <div class={`flex flex-col ${meta.reverseLayout ? 'md:flex-row-reverse' : 'md:flex-row'} items-center md:items-start gap-8 md:gap-12`}>
+    
+    <!-- 1. TAROT CARD (3D Perspective Fit Size) -->
+    <div 
+      class="card-wrapper perspective-1000 w-52 h-84 md:w-60 md:h-96 flex-shrink-0 cursor-pointer"
+      data-card-index={index}
+      onclick="flipTarotCard(this)"
+    >
+      <div class="card-inner relative w-full h-full duration-700 transform-style-3d transition-transform shadow-2xl rounded-2xl">
+        
+        <!-- Back Side -->
+        <div class="absolute inset-0 w-full h-full bg-[#0d0722] border-2 border-amber-300/40 rounded-2xl shadow-[0_0_20px_rgba(244,114,182,0.15)] flex flex-col items-center justify-center backface-hidden hover:border-pink-300 hover:shadow-[0_0_30px_rgba(244,114,182,0.3)] transition-all">
+          <div class="w-[90%] h-[93%] border border-purple-400/20 rounded-xl flex items-center justify-center bg-gradient-to-b from-purple-900/30 to-purple-950/80">
+            <div class="text-center space-y-2">
+              <span class="text-4xl block animate-pulse">✦</span>
+              <span class="text-amber-200 font-serif text-xl tracking-widest block font-bold">ORACLE</span>
+              <p class="text-[10px] text-pink-300/70 tracking-widest uppercase">Click to Reveal</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Front Side (Card Image) -->
+        <div class="absolute inset-0 w-full h-full bg-slate-950 border-2 border-amber-300 rounded-2xl shadow-[0_0_35px_rgba(251,191,36,0.3)] [transform:rotateY(180deg)] backface-hidden p-2 flex flex-col items-center justify-center">
+          <div class={`w-full h-full overflow-hidden rounded-xl bg-purple-950 flex items-center justify-center ${card.isReversed ? 'rotate-180' : ''}`}>
+            {images[imagePath] ? (
+              <Image 
+                src={images[imagePath]()} 
+                alt={card.name}
+                width={260}
+                height={420}
+                format="webp"
+                quality={90}
+                class="w-full h-full object-cover rounded-lg"
+              />
+            ) : (
+              <div class="text-xs text-red-400">Image missing</div>
+            )}
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 2. STORY DESCRIPTION (Spacious & Readable) -->
+    <div class="flex-grow space-y-4 text-left">
+      <div>
+        <span class="text-xs font-serif text-purple-300/60 italic block mb-1">
+          "{meta.storyContext}"
+        </span>
+        <h3 class="text-2xl md:text-3xl font-serif font-black bg-gradient-to-r from-amber-100 via-pink-200 to-amber-200 bg-clip-text text-transparent">
+          {card.name}
+        </h3>
+      </div>
+
+      <!-- Destiny Message -->
+      <div class="bg-[#090417]/80 border border-purple-500/20 p-5 rounded-2xl space-y-2 shadow-inner">
+        <span class="text-xs font-bold uppercase tracking-wider text-amber-300/90 flex items-center gap-1.5">
+          <span>✨</span> Interpretation & Guidance:
+        </span>
+        <p class="text-sm md:text-base leading-relaxed text-purple-100/90 font-medium">
+          {card.meaning}
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<style>
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  .transform-style-3d {
+    transform-style: preserve-3d;
+  }
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+  .flipped {
+    transform: rotateY(180deg);
+  }
+</style>

@@ -1,0 +1,116 @@
+---
+// src/components/TarotCard.astro
+import { Image } from 'astro:assets';
+
+interface Props {
+  card: {
+    name: string;
+    name_short: string;
+    meaning: string;
+    isReversed: boolean;
+  };
+  label: string;
+  index: number;
+}
+
+const { card, label, index } = Astro.props;
+
+// Dynamically import all WebP/JPG images from src/assets/cards/
+const images = import.meta.glob<{ default: ImageMetadata }>('/src/assets/cards/*.{jpg,webp}');
+const imagePath = `/src/assets/cards/${card.name_short}.jpg`; // Adjust file format in assets (.jpg / .webp)
+---
+
+<div class="w-full bg-purple-950/40 border border-purple-500/20 rounded-3xl p-5 md:p-6 backdrop-blur-md shadow-[0_0_30px_rgba(18,10,42,0.6)] flex flex-col space-y-4">
+  
+  <!-- Header Label: Past / Present / Future -->
+  <div class="flex items-center justify-between border-b border-purple-500/20 pb-3">
+    <span class="text-xs font-bold uppercase tracking-widest text-amber-200 bg-purple-900/60 px-4 py-1.5 rounded-full border border-pink-300/30">
+      {label}
+    </span>
+    <span class="text-[11px] font-mono font-bold text-pink-300 bg-pink-500/10 px-3 py-1 rounded-full border border-pink-500/20">
+      {card.isReversed ? '↺ REVERSED' : '🡅 UPRIGHT'}
+    </span>
+  </div>
+
+  <!-- Responsive 2-Column Layout: Card Left, Description Right -->
+  <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 pt-2">
+    
+    <!-- 1. CARD CANVAS (3D Flip Effect) -->
+    <div 
+      class="card-wrapper perspective-1000 w-44 h-72 sm:w-48 sm:h-80 flex-shrink-0 cursor-pointer group"
+      data-card-index={index}
+      onclick="flipTarotCard(this)"
+    >
+      <div class="card-inner relative w-full h-full duration-700 transform-style-3d transition-transform shadow-2xl rounded-2xl">
+        
+        <!-- CARD BACK (Unrevealed) -->
+        <div class="absolute inset-0 w-full h-full bg-[#0d0722] border-2 border-amber-300/40 rounded-2xl shadow-[0_0_20px_rgba(244,114,182,0.15)] flex flex-col items-center justify-center backface-hidden group-hover:border-pink-300 group-hover:shadow-[0_0_25px_rgba(244,114,182,0.3)] transition-all">
+          <div class="w-[90%] h-[93%] border border-purple-400/20 rounded-xl flex items-center justify-center bg-gradient-to-b from-purple-900/30 to-purple-950/80">
+            <div class="text-center space-y-2">
+              <span class="text-3xl block animate-pulse">✦</span>
+              <span class="text-amber-200 font-serif text-lg tracking-widest block font-bold">ORACLE</span>
+              <p class="text-[9px] text-pink-300/70 tracking-widest uppercase">Click to Reveal</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD FRONT (Card Image) -->
+        <div class="absolute inset-0 w-full h-full bg-slate-950 border-2 border-amber-300 rounded-2xl shadow-[0_0_30px_rgba(251,191,36,0.3)] [transform:rotateY(180deg)] backface-hidden p-2 flex flex-col items-center justify-center">
+          <div class={`w-full h-full overflow-hidden rounded-xl bg-purple-950 flex items-center justify-center ${card.isReversed ? 'rotate-180' : ''}`}>
+            {images[imagePath] ? (
+              <Image 
+                src={images[imagePath]()} 
+                alt={card.name}
+                width={200}
+                height={350}
+                format="webp"
+                quality={85}
+                class="w-full h-full object-cover rounded-lg"
+              />
+            ) : (
+              <div class="text-xs text-red-400">Image missing</div>
+            )}
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 2. FULL DESCRIPTION (Right of the Card) -->
+    <div class="flex-grow space-y-3 text-left">
+      <h3 class="text-xl md:text-2xl font-serif font-black bg-gradient-to-r from-amber-100 via-pink-200 to-purple-200 bg-clip-text text-transparent">
+        {card.name}
+      </h3>
+
+      <!-- Card Meaning Box -->
+      <div class="bg-[#0b051b]/80 border border-purple-500/20 p-4 rounded-2xl space-y-2 shadow-inner">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-amber-300/80 block">
+          ✨ Meaning & Guidance:
+        </span>
+        <p class="text-xs md:text-sm leading-relaxed text-purple-100/90 font-medium">
+          {card.meaning}
+        </p>
+      </div>
+
+      <p class="text-[11px] text-purple-300/50 italic">
+        *Click the card image on the left to view the artwork.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<style>
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  .transform-style-3d {
+    transform-style: preserve-3d;
+  }
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+  .flipped {
+    transform: rotateY(180deg);
+  }
+</style>

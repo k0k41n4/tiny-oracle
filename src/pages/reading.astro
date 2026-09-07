@@ -1,0 +1,105 @@
+---
+// src/pages/reading.astro
+import Layout from '../layouts/Layout.astro';
+import TarotCardSection from '../components/TarotCardSection.astro';
+import tarotData from '../assets/tarot-images.json';
+
+// Shuffle cards
+const shuffled = [...tarotData.cards].sort(() => 0.5 - Math.random());
+const selectedCards = shuffled.slice(0, 3).map((card) => {
+  const isReversed = Math.random() < 0.3;
+  const name_short = card.img.replace('.jpg', '');
+  const meaningList = isReversed ? card.meanings.shadow : card.meanings.light;
+  const meaning = meaningList.join('. ');
+
+  return {
+    name: card.name,
+    name_short,
+    meaning,
+    isReversed
+  };
+});
+
+const sectionMeta = [
+  {
+    chapter: "CHAPTER I",
+    label: "The Past",
+    storyContext: "Echoes of your footsteps and foundational energies that shaped your journey to this moment.",
+    reverseLayout: false
+  },
+  {
+    chapter: "CHAPTER II",
+    label: "The Present",
+    storyContext: "A mirror to your current reality. The active forces unfolding around your mind and soul.",
+    reverseLayout: true // Alternating card and text positions like a storybook
+  },
+  {
+    chapter: "CHAPTER III",
+    label: "The Future",
+    storyContext: "Whispers of fate and potential events gently weaving into your upcoming timeline.",
+    reverseLayout: false
+  }
+];
+---
+
+<Layout title="Your Tarot Reading — Tiny Oracle">
+  <script is:inline src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <div class="w-full max-w-4xl mx-auto space-y-16 py-8 px-4">
+    
+    <!-- Hero Header / Story Title -->
+    <div class="text-center space-y-4 max-w-xl mx-auto">
+      <span class="inline-block px-4 py-1.5 rounded-full bg-purple-900/50 border border-pink-300/30 text-pink-300 text-xs font-bold tracking-widest uppercase shadow-[0_0_15px_rgba(244,114,182,0.2)]">
+        ✦ The Tale of Three Cards ✦
+      </span>
+      <h1 class="text-3xl md:text-5xl font-black font-serif text-transparent bg-gradient-to-r from-amber-100 via-pink-200 to-amber-300 bg-clip-text">
+        YOUR SACRED ORACLE
+      </h1>
+      <p class="text-purple-200/70 text-xs md:text-sm font-medium leading-relaxed">
+        Unfold the chapters of your destiny. Click each card to reveal the hidden wisdom within.
+      </p>
+    </div>
+
+    <!-- Vertical Story Sections (Past, Present, Future) -->
+    <div class="space-y-16">
+      {selectedCards.map((card, index) => (
+        <TarotCardSection 
+          card={card} 
+          meta={sectionMeta[index]} 
+          index={index} 
+        />
+      ))}
+    </div>
+
+    <!-- Call To Action Bottom -->
+    <div class="pt-12 text-center space-y-4 border-t border-purple-500/20">
+      <a 
+        href="/" 
+        class="inline-block px-10 py-4 rounded-2xl bg-gradient-to-r from-amber-300 via-pink-300 to-amber-400 text-slate-950 font-serif font-black text-sm hover:scale-105 active:scale-95 transition shadow-[0_0_30px_rgba(251,191,36,0.4)]"
+      >
+        DRAW ANOTHER SPREAD ($5)
+      </a>
+      <p class="text-[11px] text-purple-300/50">
+        Destiny is ever-shifting. Every new draw channels fresh cosmic energy.
+      </p>
+    </div>
+
+  </div>
+
+  <script is:inline>
+    function flipTarotCard(element) {
+      const inner = element.querySelector('.card-inner');
+      if (!inner.classList.contains('flipped')) {
+        inner.classList.add('flipped');
+        if (typeof confetti === 'function') {
+          confetti({
+            particleCount: 40,
+            spread: 60,
+            origin: { y: 0.6 },
+            colors: ['#fef3c7', '#f472b6', '#c084fc']
+          });
+        }
+      }
+    }
+  </script>
+</Layout>
