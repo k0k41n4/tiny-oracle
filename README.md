@@ -1,46 +1,24 @@
-# Astro Starter Kit: Basics
+Tiny Oracle — A Whimsical 3-Card Tarot Experience for $5
 
-```sh
-npm create astro@latest -- --template basics
-```
+Unveil the wisdom of Past, Present, and Future through an enchanting storybook journey.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+✨ Welcome to Tiny Oracle ✨
 
-## 🚀 Project Structure
+Tiny Oracle is a beautifully crafted, magical 3-card tarot reading web application designed to give users an enchanting, storybook-style spiritual journey. Inspired by whimsical cosmic aesthetics and smooth iGaming interactions, users can draw three sacred cards—Past, Present, and Future—for an instant $5 USD fee.
 
-Inside of your Astro project, you'll see the following folders and files:
+🌟 KEY FEATURES
+- 🔮 Whimsical Storybook Layout: A vertical, chapter-based reading flow (Past, Present, Future) that guides users through a rich, immersive narrative.
+- ⚡ Lightning-Fast Performance: Built on Astro.js and Tailwind CSS with fully optimized WebP assets for near-instant load times worldwide.
+- 💳 Seamless PayPal Integration: Plug-and-play $5 USD monetization flow via PayPal Smart Payment Buttons.
+- 🎨 Interactive 3D Card Flip FX: Engaging 3D card flip animations paired with celebratory gold confetti effects upon reveal.
+- 🔒 Zero-AI Overhead: Uses an authentic, curated JSON tarot dataset—meaning $0 API costs and 100% profit margins per draw.
+- 📱 Fully Responsive & SEO Optimized: Engineered for flawless display across mobile and desktop, equipped with JSON-LD schema, Twitter Cards, and Open Graph meta tags.
 
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
-```
+🛠️ TECH STACK
+- Framework: Astro.js
+- Styling: Tailwind CSS
+- Assets: WebP Optimized Graphics & SVG Vectors
+- Payment Gateway: PayPal JS SDK
+- Infrastructure: Cloudflare Pages / Vercel ready
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Tuck your users into a cosmic tale of destiny and start monetizing instant tarot readings effortlessly!
