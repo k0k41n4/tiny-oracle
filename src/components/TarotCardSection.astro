@@ -86,8 +86,8 @@ const imagePath = `/src/assets/cards/${card.name_short}.jpg`;
       </div>
     </div>
 
-    <!-- 2. STORY DESCRIPTION (Spacious & Readable) -->
-    <div class="flex-grow space-y-4 text-left">
+    <!-- 2. STORY DESCRIPTION (Tersembunyi Awalnya, Mungul Pas Kartu Dibalik) -->
+    <div class="card-reading-text flex-grow space-y-4 text-left opacity-0 pointer-events-none scale-95 transition-all duration-700 ease-out">
       <div>
         <span class="text-xs font-serif text-purple-300/60 italic block mb-1">
           "{meta.storyContext}"
@@ -123,5 +123,11 @@ const imagePath = `/src/assets/cards/${card.name_short}.jpg`;
   }
   .flipped {
     transform: rotateY(180deg);
+  }
+  /* Class untuk menampilkan deskripsi teks */
+  .reveal-text {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: scale(1) !important;
   }
 </style>
