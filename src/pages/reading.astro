@@ -3,7 +3,16 @@
 import Layout from "../layouts/Layout.astro";
 import tarotData from "../assets/tarot-images.json";
 
-// Pass raw dataset JSON ke Client Script
+// 1. Ambil URL gambar dari folder src/assets/cards/ lewat bundler Vite
+const cardImages = import.meta.glob<{ default: string }>('/src/assets/cards/*.{webp}', { eager: true });
+
+const imageMap: Record<string, string> = {};
+for (const path in cardImages) {
+  const fileName = path.split('/').pop() || '';
+  imageMap[fileName] = cardImages[path].default;
+}
+
+// 2. Kirim data kartu murni ke client-side script
 const allCards = tarotData.cards;
 ---
 
@@ -31,9 +40,9 @@ const allCards = tarotData.cards;
       </p>
     </div>
 
-    <!-- Container Kartu Dinamis (Di-render murni oleh JS Client) -->
+    <!-- Container Kartu Dinamis -->
     <div id="reading-container" class="space-y-16 min-h-[400px]">
-      <!-- Content cards render here -->
+      <!-- Content cards render here via JS -->
     </div>
 
     <!-- Call To Action Bottom -->
@@ -50,9 +59,9 @@ const allCards = tarotData.cards;
     </div>
   </div>
 
-  <!-- Client-side execution script -->
-  <script is:inline define:vars={{ allCards }}>
-    // Algoritma Fisher-Yates Shuffle (Di-run di browser pengunjung)
+  <!-- 3. LOGIKA PENGACAKAN KARTU (CLIENT-SIDE) -->
+  <script is:inline define:vars={{ allCards, imageMap }}>
+    // Algoritma Fisher-Yates Shuffle (Di-run real-time di browser)
     function shuffleDeck(deck) {
       const array = [...deck];
       for (let i = array.length - 1; i > 0; i--) {
@@ -62,11 +71,11 @@ const allCards = tarotData.cards;
       return array;
     }
 
-    // Eksekusi pengacakan saat halaman dibuka/di-refresh
+    // Tiap kali pengunjung buka/refresh, 3 kartu baru dipilih secara acak
     const shuffled = shuffleDeck(allCards);
     const selectedCards = shuffled.slice(0, 3).map((card) => {
       const isReversed = Math.random() < 0.3;
-      const name_short = card.img.replace(".jpg", "");
+      const name_short = card.img.replace(".jpg", "").replace(".webp", "");
       const meaningList = isReversed ? card.meanings.shadow : card.meanings.light;
       return {
         name: card.name,
@@ -97,86 +106,88 @@ const allCards = tarotData.cards;
       }
     ];
 
-    // Render kartu langsung ke DOM
+    // Render HTML kartu dinamis ke DOM
     const container = document.getElementById("reading-container");
-    container.innerHTML = selectedCards.map((card, index) => {
-      const meta = sectionMeta[index];
-      
-      // Ambil gambar dari folder /cards/ yang ada di public/
-      const imagePath = `/cards/${card.name_short}.jpg`;
+    if (container) {
+      container.innerHTML = selectedCards.map((card, index) => {
+        const meta = sectionMeta[index];
+        const fileNameJpg = `${card.name_short}.jpg`;
+        const fileNameWebp = `${card.name_short}.webp`;
+        const imagePath = imageMap[fileNameJpg] || imageMap[fileNameWebp] || `/cards/${fileNameJpg}`;
 
-      return `
-        <section class="w-full bg-purple-950/30 border border-purple-500/20 rounded-3xl p-6 md:p-10 backdrop-blur-md shadow-[0_0_40px_rgba(18,10,42,0.8)] relative overflow-hidden group">
-          
-          <div class="flex items-center justify-between border-b border-purple-500/20 pb-4 mb-6">
-            <div class="space-y-0.5">
-              <span class="text-[10px] font-mono font-bold tracking-widest text-amber-300/80 uppercase block">${meta.chapter}</span>
-              <h2 class="text-lg md:text-xl font-serif font-bold text-pink-200">${meta.label}</h2>
-            </div>
-            <span class="text-[11px] font-mono font-bold text-amber-200 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-300/30">
-              ${card.isReversed ? '↺ REVERSED' : '🡅 UPRIGHT'}
-            </span>
-          </div>
-
-          <div class="flex flex-col ${meta.reverseLayout ? 'md:flex-row-reverse' : 'md:flex-row'} items-center md:items-start gap-8 md:gap-12">
+        return `
+          <section class="w-full bg-purple-950/30 border border-purple-500/20 rounded-3xl p-6 md:p-10 backdrop-blur-md shadow-[0_0_40px_rgba(18,10,42,0.8)] relative overflow-hidden group">
             
-            <div class="card-wrapper perspective-1000 w-52 h-84 md:w-60 md:h-96 flex-shrink-0 cursor-pointer" onclick="flipTarotCard(this)">
-              <div class="card-inner relative w-full h-full duration-700 transform-style-3d transition-transform shadow-2xl rounded-2xl">
-                
-                <!-- Back Side -->
-                <div class="absolute inset-0 w-full h-full bg-[#0d0722] border-2 border-amber-300/40 rounded-2xl shadow-[0_0_20px_rgba(244,114,182,0.15)] flex flex-col items-center justify-center backface-hidden hover:border-pink-300 hover:shadow-[0_0_30px_rgba(244,114,182,0.3)] transition-all">
-                  <div class="w-[90%] h-[93%] border border-purple-400/20 rounded-xl flex items-center justify-center bg-gradient-to-b from-purple-900/30 to-purple-950/80">
-                    <div class="text-center space-y-2">
-                      <span class="text-4xl block animate-pulse">✦</span>
-                      <span class="text-amber-200 font-serif text-xl tracking-widest block font-bold">ORACLE</span>
-                      <p class="text-[10px] text-pink-300/70 tracking-widest uppercase">Click to Reveal</p>
+            <div class="flex items-center justify-between border-b border-purple-500/20 pb-4 mb-6">
+              <div class="space-y-0.5">
+                <span class="text-[10px] font-mono font-bold tracking-widest text-amber-300/80 uppercase block">${meta.chapter}</span>
+                <h2 class="text-lg md:text-xl font-serif font-bold text-pink-200">${meta.label}</h2>
+              </div>
+              <span class="text-[11px] font-mono font-bold text-amber-200 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-300/30">
+                ${card.isReversed ? '↺ REVERSED' : '🡅 UPRIGHT'}
+              </span>
+            </div>
+
+            <div class="flex flex-col ${meta.reverseLayout ? 'md:flex-row-reverse' : 'md:flex-row'} items-center md:items-start gap-8 md:gap-12">
+              
+              <div class="card-wrapper perspective-1000 w-52 h-84 md:w-60 md:h-96 flex-shrink-0 cursor-pointer" onclick="flipTarotCard(this)">
+                <div class="card-inner relative w-full h-full transition-transform duration-700 transform-style-3d shadow-2xl rounded-2xl">
+                  
+                  <!-- Card Back -->
+                  <div class="absolute inset-0 w-full h-full bg-[#0d0722] border-2 border-amber-300/40 rounded-2xl shadow-[0_0_20px_rgba(244,114,182,0.15)] flex flex-col items-center justify-center backface-hidden hover:border-pink-300 hover:shadow-[0_0_30px_rgba(244,114,182,0.3)] transition-all">
+                    <div class="w-[90%] h-[93%] border border-purple-400/20 rounded-xl flex items-center justify-center bg-gradient-to-b from-purple-900/30 to-purple-950/80">
+                      <div class="text-center space-y-2">
+                        <span class="text-4xl block animate-pulse">✦</span>
+                        <span class="text-amber-200 font-serif text-xl tracking-widest block font-bold">ORACLE</span>
+                        <p class="text-[10px] text-pink-300/70 tracking-widest uppercase">Click to Reveal</p>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <!-- Front Side -->
-                <div class="absolute inset-0 w-full h-full bg-slate-950 border-2 border-amber-300 rounded-2xl shadow-[0_0_35px_rgba(251,191,36,0.3)] [transform:rotateY(180deg)] backface-hidden p-2 flex flex-col items-center justify-center">
-                  <div class="w-full h-full overflow-hidden rounded-xl bg-purple-950 flex items-center justify-center ${card.isReversed ? 'rotate-180' : ''}">
-                    <img src="${imagePath}" alt="${card.name}" class="w-full h-full object-cover rounded-lg" onerror="this.src='/cards/card-back.jpg'" />
+                  <!-- Card Front -->
+                  <div class="absolute inset-0 w-full h-full bg-slate-950 border-2 border-amber-300 rounded-2xl shadow-[0_0_35px_rgba(251,191,36,0.3)] rotate-y-180 backface-hidden p-2 flex flex-col items-center justify-center">
+                    <div class="w-full h-full overflow-hidden rounded-xl bg-purple-950 flex items-center justify-center ${card.isReversed ? 'rotate-180' : ''}">
+                      <img src="${imagePath}" alt="${card.name}" class="w-full h-full object-cover rounded-lg" onerror="this.src='/cards/card-back.jpg'" />
+                    </div>
                   </div>
+
+                </div>
+              </div>
+
+              <!-- Reading Text -->
+              <div class="card-reading-text flex-grow space-y-4 text-left opacity-0 pointer-events-none scale-95 transition-all duration-700 ease-out">
+                <div>
+                  <span class="text-xs font-serif text-purple-300/60 italic block mb-1">"${meta.storyContext}"</span>
+                  <h3 class="text-2xl md:text-3xl font-serif font-black bg-gradient-to-r from-amber-100 via-pink-200 to-amber-200 bg-clip-text text-transparent">${card.name}</h3>
                 </div>
 
+                <div class="bg-[#090417]/80 border border-purple-500/20 p-5 rounded-2xl space-y-2 shadow-inner">
+                  <span class="text-xs font-bold uppercase tracking-wider text-amber-300/90 flex items-center gap-1.5">
+                    <span>✨</span> Interpretation & Guidance:
+                  </span>
+                  <p class="text-sm md:text-base leading-relaxed text-purple-100/90 font-medium">${card.meaning}</p>
+                </div>
               </div>
+
             </div>
+          </section>
+        `;
+      }).join("");
+    }
 
-            <!-- Reading Description Text -->
-            <div class="card-reading-text flex-grow space-y-4 text-left opacity-0 pointer-events-none scale-95 transition-all duration-700 ease-out">
-              <div>
-                <span class="text-xs font-serif text-purple-300/60 italic block mb-1">"${meta.storyContext}"</span>
-                <h3 class="text-2xl md:text-3xl font-serif font-black bg-gradient-to-r from-amber-100 via-pink-200 to-amber-200 bg-clip-text text-transparent">${card.name}</h3>
-              </div>
-
-              <div class="bg-[#090417]/80 border border-purple-500/20 p-5 rounded-2xl space-y-2 shadow-inner">
-                <span class="text-xs font-bold uppercase tracking-wider text-amber-300/90 flex items-center gap-1.5">
-                  <span>✨</span> Interpretation & Guidance:
-                </span>
-                <p class="text-sm md:text-base leading-relaxed text-purple-100/90 font-medium">${card.meaning}</p>
-              </div>
-            </div>
-
-          </div>
-        </section>
-      `;
-    }).join("");
-
-    // Fungsi Click Flip & Confetti
+    // Handler Flip Global
     window.flipTarotCard = function(element) {
       const inner = element.querySelector(".card-inner");
       const section = element.closest("section");
       const readingText = section ? section.querySelector(".card-reading-text") : null;
 
-      if (!inner.classList.contains("flipped")) {
-        inner.classList.add("flipped");
+      if (inner && !inner.classList.contains("is-flipped")) {
+        inner.classList.add("is-flipped");
         if (readingText) readingText.classList.add("reveal-text");
         if (typeof confetti === "function") {
           confetti({
-            particleCount: 40,
-            spread: 60,
+            particleCount: 45,
+            spread: 70,
             origin: { y: 0.6 },
             colors: ["#fef3c7", "#f472b6", "#c084fc"],
           });
@@ -185,11 +196,24 @@ const allCards = tarotData.cards;
     };
   </script>
 
-  <style>
-    .perspective-1000 { perspective: 1000px; }
-    .transform-style-3d { transform-style: preserve-3d; }
-    .backface-hidden { backface-visibility: hidden; }
-    .flipped { transform: rotateY(180deg); }
+  <!-- Essential CSS for 3D Flip Animation -->
+  <style is:global>
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .transform-style-3d {
+      transform-style: preserve-3d;
+    }
+    .backface-hidden {
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+    .is-flipped {
+      transform: rotateY(180deg) !important;
+    }
     .reveal-text {
       opacity: 1 !important;
       pointer-events: auto !important;

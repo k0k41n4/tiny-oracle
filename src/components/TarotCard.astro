@@ -1,6 +1,5 @@
 ---
 // src/components/TarotCard.astro
-import { Image } from 'astro:assets';
 
 interface Props {
   card: {
@@ -15,9 +14,14 @@ interface Props {
 
 const { card, label, index } = Astro.props;
 
-// Dynamically import all WebP/JPG images from src/assets/cards/
-const images = import.meta.glob<{ default: ImageMetadata }>('/src/assets/cards/*.{jpg,webp}');
-const imagePath = `/src/assets/cards/${card.name_short}.jpg`; // Adjust file format in assets (.jpg / .webp)
+// 1. Import semua URL gambar dari src/assets/cards/ (di-resolve otomatis oleh Vite saat build)
+const cardImages = import.meta.glob<{ default: string }>('./cards/*.{jpg,webp}', { eager: true });
+
+// 2. Cari URL gambar yang cocok berdasarkan name_short
+const targetPathJpg = `./cards/${card.name_short}.jpg`;
+const targetPathWebp = `./cards/${card.name_short}.webp`;
+
+const imageSrc = cardImages[targetPathJpg]?.default || cardImages[targetPathWebp]?.default || '';
 ---
 
 <div class="w-full bg-purple-950/40 border border-purple-500/20 rounded-3xl p-5 md:p-6 backdrop-blur-md shadow-[0_0_30px_rgba(18,10,42,0.6)] flex flex-col space-y-4">
@@ -32,7 +36,7 @@ const imagePath = `/src/assets/cards/${card.name_short}.jpg`; // Adjust file for
     </span>
   </div>
 
-  <!-- Responsive 2-Column Layout: Card Left, Description Right -->
+  <!-- Responsive 2-Column Layout -->
   <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 pt-2">
     
     <!-- 1. CARD CANVAS (3D Flip Effect) -->
@@ -57,14 +61,11 @@ const imagePath = `/src/assets/cards/${card.name_short}.jpg`; // Adjust file for
         <!-- CARD FRONT (Card Image) -->
         <div class="absolute inset-0 w-full h-full bg-slate-950 border-2 border-amber-300 rounded-2xl shadow-[0_0_30px_rgba(251,191,36,0.3)] [transform:rotateY(180deg)] backface-hidden p-2 flex flex-col items-center justify-center">
           <div class={`w-full h-full overflow-hidden rounded-xl bg-purple-950 flex items-center justify-center ${card.isReversed ? 'rotate-180' : ''}`}>
-            {images[imagePath] ? (
-              <Image 
-                src={images[imagePath]()} 
+            {imageSrc ? (
+              <img 
+                src={imageSrc} 
                 alt={card.name}
-                width={200}
-                height={350}
-                format="webp"
-                quality={85}
+                loading="lazy"
                 class="w-full h-full object-cover rounded-lg"
               />
             ) : (
@@ -76,7 +77,7 @@ const imagePath = `/src/assets/cards/${card.name_short}.jpg`; // Adjust file for
       </div>
     </div>
 
-    <!-- 2. FULL DESCRIPTION (Right of the Card) -->
+    <!-- 2. FULL DESCRIPTION -->
     <div class="flex-grow space-y-3 text-left">
       <h3 class="text-xl md:text-2xl font-serif font-black bg-gradient-to-r from-amber-100 via-pink-200 to-purple-200 bg-clip-text text-transparent">
         {card.name}
