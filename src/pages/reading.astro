@@ -4,10 +4,25 @@ import Layout from "../layouts/Layout.astro";
 import TarotCardSection from "../components/TarotCardSection.astro";
 import tarotData from "../assets/tarot-images.json";
 
-// Shuffle cards
-const shuffled = [...tarotData.cards].sort(() => 0.5 - Math.random());
+// 1. Matikan Caching Biar Setiap Refresh / Visit Baru Dapet Kartu Beda!
+Astro.response.headers.set(
+  "Cache-Control",
+  "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+);
+
+// 2. Algoritma Pengacak Fisher-Yates (Benar-benar Acak & Merata)
+function shuffleDeck(deck: any[]) {
+  const array = [...deck];
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+const shuffled = shuffleDeck(tarotData.cards);
 const selectedCards = shuffled.slice(0, 3).map((card) => {
-  const isReversed = Math.random() < 0.3;
+  const isReversed = Math.random() < 0.3; // 30% peluang reversed
   const name_short = card.img.replace(".jpg", "");
   const meaningList = isReversed ? card.meanings.shadow : card.meanings.light;
   const meaning = meaningList.join(". ");
@@ -33,7 +48,7 @@ const sectionMeta = [
     label: "The Present",
     storyContext:
       "A mirror to your current reality. The active forces unfolding around your mind and soul.",
-    reverseLayout: true, // Alternating card and text positions like a storybook
+    reverseLayout: true,
   },
   {
     chapter: "CHAPTER III",
