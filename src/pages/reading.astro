@@ -3,16 +3,7 @@
 import Layout from "../layouts/Layout.astro";
 import tarotData from "../assets/tarot-images.json";
 
-// 1. Ambil URL gambar dari folder src/assets/cards/ lewat bundler Vite
-const cardImages = import.meta.glob<{ default: string }>('/src/assets/cards/*.{webp}', { eager: true });
-
-const imageMap: Record<string, string> = {};
-for (const path in cardImages) {
-  const fileName = path.split('/').pop() || '';
-  imageMap[fileName] = cardImages[path].default;
-}
-
-// 2. Kirim data kartu murni ke client-side script
+// Murni cuma ambil data JSON tarot aja di frontmatter
 const allCards = tarotData.cards;
 ---
 
@@ -35,8 +26,11 @@ const allCards = tarotData.cards;
       >
         YOUR SACRED ORACLE
       </h1>
-      <p class="text-purple-200/70 text-xs md:text-sm font-medium leading-relaxed">
-        Unfold the chapters of your destiny. Click each card to reveal the hidden wisdom within.
+      <p
+        class="text-purple-200/70 text-xs md:text-sm font-medium leading-relaxed"
+      >
+        Unfold the chapters of your destiny. Click each card to reveal the
+        hidden wisdom within.
       </p>
     </div>
 
@@ -59,9 +53,9 @@ const allCards = tarotData.cards;
     </div>
   </div>
 
-  <!-- 3. LOGIKA PENGACAKAN KARTU (CLIENT-SIDE) -->
-  <script is:inline define:vars={{ allCards, imageMap }}>
-    // Algoritma Fisher-Yates Shuffle (Di-run real-time di browser)
+  <!-- Client-side script murni -->
+  <script is:inline define:vars={{ allCards }}>
+    // Fisher-Yates Shuffle
     function shuffleDeck(deck) {
       const array = [...deck];
       for (let i = array.length - 1; i > 0; i--) {
@@ -71,12 +65,15 @@ const allCards = tarotData.cards;
       return array;
     }
 
-    // Tiap kali pengunjung buka/refresh, 3 kartu baru dipilih secara acak
+    // Acak 3 kartu tiap kali refresh/buka
     const shuffled = shuffleDeck(allCards);
     const selectedCards = shuffled.slice(0, 3).map((card) => {
       const isReversed = Math.random() < 0.3;
-      const name_short = card.img.replace(".jpg", "").replace(".webp", "");
-      const meaningList = isReversed ? card.meanings.shadow : card.meanings.light;
+      // Ambil nama file tanpa ekstensi
+      const name_short = card.img.replace(/\.(jpg|png|webp)$/, "");
+      const meaningList = isReversed
+        ? card.meanings.shadow
+        : card.meanings.light;
       return {
         name: card.name,
         name_short: name_short,
@@ -89,33 +86,35 @@ const allCards = tarotData.cards;
       {
         chapter: "CHAPTER I",
         label: "The Past",
-        storyContext: "Echoes of your footsteps and foundational energies that shaped your journey to this moment.",
-        reverseLayout: false
+        storyContext:
+          "Echoes of your footsteps and foundational energies that shaped your journey to this moment.",
+        reverseLayout: false,
       },
       {
         chapter: "CHAPTER II",
         label: "The Present",
-        storyContext: "A mirror to your current reality. The active forces unfolding around your mind and soul.",
-        reverseLayout: true
+        storyContext:
+          "A mirror to your current reality. The active forces unfolding around your mind and soul.",
+        reverseLayout: true,
       },
       {
         chapter: "CHAPTER III",
         label: "The Future",
-        storyContext: "Whispers of fate and potential events gently weaving into your upcoming timeline.",
-        reverseLayout: false
-      }
+        storyContext:
+          "Whispers of fate and potential events gently weaving into your upcoming timeline.",
+        reverseLayout: false,
+      },
     ];
 
-    // Render HTML kartu dinamis ke DOM
     const container = document.getElementById("reading-container");
     if (container) {
-      container.innerHTML = selectedCards.map((card, index) => {
-        const meta = sectionMeta[index];
-        const fileNameJpg = `${card.name_short}.jpg`;
-        const fileNameWebp = `${card.name_short}.webp`;
-        const imagePath = imageMap[fileNameJpg] || imageMap[fileNameWebp] || `/cards/${fileNameJpg}`;
+      container.innerHTML = selectedCards
+        .map((card, index) => {
+          const meta = sectionMeta[index];
+          // LANGSUNG TEMBAK KE FOLDER /public/cards/*.webp !
+          const imagePath = `/cards/${card.name_short}.webp`;
 
-        return `
+          return `
           <section class="w-full bg-purple-950/30 border border-purple-500/20 rounded-3xl p-6 md:p-10 backdrop-blur-md shadow-[0_0_40px_rgba(18,10,42,0.8)] relative overflow-hidden group">
             
             <div class="flex items-center justify-between border-b border-purple-500/20 pb-4 mb-6">
@@ -124,12 +123,13 @@ const allCards = tarotData.cards;
                 <h2 class="text-lg md:text-xl font-serif font-bold text-pink-200">${meta.label}</h2>
               </div>
               <span class="text-[11px] font-mono font-bold text-amber-200 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-300/30">
-                ${card.isReversed ? '↺ REVERSED' : '🡅 UPRIGHT'}
+                ${card.isReversed ? "↺ REVERSED" : "🡅 UPRIGHT"}
               </span>
             </div>
 
-            <div class="flex flex-col ${meta.reverseLayout ? 'md:flex-row-reverse' : 'md:flex-row'} items-center md:items-start gap-8 md:gap-12">
+            <div class="flex flex-col ${meta.reverseLayout ? "md:flex-row-reverse" : "md:flex-row"} items-center md:items-start gap-8 md:gap-12">
               
+              <!-- Card Wrapper -->
               <div class="card-wrapper perspective-1000 w-52 h-84 md:w-60 md:h-96 flex-shrink-0 cursor-pointer" onclick="flipTarotCard(this)">
                 <div class="card-inner relative w-full h-full transition-transform duration-700 transform-style-3d shadow-2xl rounded-2xl">
                   
@@ -144,10 +144,11 @@ const allCards = tarotData.cards;
                     </div>
                   </div>
 
-                  <!-- Card Front -->
+                  <!-- Card Front (WebP Image) -->
                   <div class="absolute inset-0 w-full h-full bg-slate-950 border-2 border-amber-300 rounded-2xl shadow-[0_0_35px_rgba(251,191,36,0.3)] rotate-y-180 backface-hidden p-2 flex flex-col items-center justify-center">
-                    <div class="w-full h-full overflow-hidden rounded-xl bg-purple-950 flex items-center justify-center ${card.isReversed ? 'rotate-180' : ''}">
-                      <img src="${imagePath}" alt="${card.name}" class="w-full h-full object-cover rounded-lg" onerror="this.src='/cards/card-back.jpg'" />
+                    <div class="w-full h-full overflow-hidden rounded-xl bg-purple-950 flex items-center justify-center ${card.isReversed ? "rotate-180" : ""}">
+                      <!-- KODE BARU (GAMBAR UTUH, RAPI, GAK NGE-ZOOM) -->
+                      <img src="${imagePath}" alt="${card.name}" class="w-full h-full object-contain p-1 rounded-lg drop-shadow-md" onerror="this.src='/cards/card-back.jpg'" />
                     </div>
                   </div>
 
@@ -172,14 +173,17 @@ const allCards = tarotData.cards;
             </div>
           </section>
         `;
-      }).join("");
+        })
+        .join("");
     }
 
     // Handler Flip Global
-    window.flipTarotCard = function(element) {
+    window.flipTarotCard = function (element) {
       const inner = element.querySelector(".card-inner");
       const section = element.closest("section");
-      const readingText = section ? section.querySelector(".card-reading-text") : null;
+      const readingText = section
+        ? section.querySelector(".card-reading-text")
+        : null;
 
       if (inner && !inner.classList.contains("is-flipped")) {
         inner.classList.add("is-flipped");
@@ -196,7 +200,6 @@ const allCards = tarotData.cards;
     };
   </script>
 
-  <!-- Essential CSS for 3D Flip Animation -->
   <style is:global>
     .perspective-1000 {
       perspective: 1000px;
